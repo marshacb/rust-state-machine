@@ -1,8 +1,7 @@
 use num::traits::{CheckedAdd, CheckedSub, Zero};
 use std::collections::BTreeMap;
 
-pub trait Config {
-	type AccountId: Ord + Clone;
+pub trait Config: crate::system::Config {
 	type Balance: Zero + CheckedSub + CheckedAdd + Copy;
 }
 
@@ -47,14 +46,18 @@ impl<T: Config> Pallet<T> {
 #[cfg(test)]
 mod tests {
 	use super::Pallet;
+	struct TestStruct;
+	impl super::Config for TestStruct {
+		type Balance = u128;
+	}
+	impl crate::system::Config for TestStruct {
+		type AccountId = String;
+		type BlockNumber = u32;
+		type Nonce = u32;
+	}
 
 	#[test]
 	fn init_balances() {
-		struct TestStruct;
-		impl super::Config for TestStruct {
-			type AccountId = String;
-			type Balance = u128;
-		}
 		let mut balances = Pallet::<TestStruct>::new();
 
 		assert_eq!(balances.balance(&"alice".to_string()), 0);
@@ -66,11 +69,6 @@ mod tests {
 
 	#[test]
 	fn transfer_balances() {
-		struct TestStruct;
-		impl super::Config for TestStruct {
-			type AccountId = String;
-			type Balance = u128;
-		}
 		let mut balances = Pallet::<TestStruct>::new();
 
 		assert_eq!(
