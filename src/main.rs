@@ -10,16 +10,24 @@ mod types {
 
 #[derive(Debug)]
 pub struct Runtime {
-	system: system::Pallet<types::AccountId, types::BlockNumber, types::Nonce>,
-	balances: balances::Pallet<types::AccountId, types::Balance>,
+	system: system::Pallet<Self>,
+	balances: balances::Pallet<Self>,
+}
+
+impl balances::Config for Runtime {
+	type AccountId = types::AccountId;
+	type Balance = types::Balance;
+}
+
+impl system::Config for Runtime {
+	type AccountId = types::AccountId;
+	type BlockNumber = types::BlockNumber;
+	type Nonce = types::Nonce;
 }
 
 impl Runtime {
 	fn new() -> Self {
-		Self {
-			system: system::Pallet::<types::AccountId, types::BlockNumber, types::Nonce>::new(),
-			balances: balances::Pallet::<types::AccountId, types::Balance>::new(),
-		}
+		Self { system: system::Pallet::<Self>::new(), balances: balances::Pallet::<Self>::new() }
 	}
 }
 

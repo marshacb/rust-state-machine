@@ -1,33 +1,34 @@
 use num::traits::{CheckedAdd, CheckedSub, Zero};
 use std::collections::BTreeMap;
 
-#[derive(Debug)]
-pub struct Pallet<AccountId, Balance> {
-	balances: BTreeMap<AccountId, Balance>,
+pub trait Config {
+	type AccountId: Ord + Clone;
+	type Balance: Zero + CheckedSub + CheckedAdd + Copy;
 }
 
-impl<AccountId, Balance> Pallet<AccountId, Balance>
-where
-	AccountId: Ord + Clone,
-	Balance: Zero + CheckedSub + CheckedAdd + Copy,
-{
+#[derive(Debug)]
+pub struct Pallet<T: Config> {
+	balances: BTreeMap<T::AccountId, T::Balance>,
+}
+
+impl<T: Config> Pallet<T> {
 	pub fn new() -> Self {
 		Self { balances: BTreeMap::new() }
 	}
 
-	pub fn set_balance(&mut self, who: &AccountId, amount: Balance) {
+	pub fn set_balance(&mut self, who: &T::AccountId, amount: T::Balance) {
 		self.balances.insert(who.clone(), amount);
 	}
 
-	pub fn balance(&self, who: &AccountId) -> Balance {
-		*self.balances.get(who).unwrap_or(&Balance::zero())
+	pub fn balance(&self, who: &T::AccountId) -> T::Balance {
+		*self.balances.get(who).unwrap_or(&T::Balance::zero())
 	}
 
 	pub fn transfer(
 		&mut self,
-		caller: AccountId,
-		to: AccountId,
-		amount: Balance,
+		caller: T::AccountId,
+		to: T::AccountId,
+		amount: T::Balance,
 	) -> Result<(), &'static str> {
 		let caller_balance = self.balance(&caller);
 		let recipent_balance = self.balance(&to);
@@ -49,7 +50,12 @@ mod tests {
 
 	#[test]
 	fn init_balances() {
-		let mut balances = Pallet::<String, u128>::new();
+		struct TestStruct;
+		impl super::Config for TestStruct {
+			type AccountId = String;
+			type Balance = u128;
+		}
+		let mut balances = Pallet::<TestStruct>::new();
 
 		assert_eq!(balances.balance(&"alice".to_string()), 0);
 		balances.set_balance(&String::from("alice"), 100);
@@ -60,7 +66,12 @@ mod tests {
 
 	#[test]
 	fn transfer_balances() {
-		let mut balances = Pallet::<String, u128>::new();
+		struct TestStruct;
+		impl super::Config for TestStruct {
+			type AccountId = String;
+			type Balance = u128;
+		}
+		let mut balances = Pallet::<TestStruct>::new();
 
 		assert_eq!(
 			balances.transfer("alice".to_string(), "bob".to_string(), 100),
