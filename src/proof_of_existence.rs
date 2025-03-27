@@ -8,8 +8,8 @@ pub trait Config: crate::system::Config {
 }
 
 pub enum Call<T: Config> {
-	Create { caller: T::AccountId, claim: T::Content },
-	Revoke { caller: T::AccountId, claim: T::Content },
+	Create { claim: T::Content },
+	Revoke { claim: T::Content },
 }
 
 impl<T: Config> crate::support::Dispatch for Pallet<T> {
@@ -18,10 +18,10 @@ impl<T: Config> crate::support::Dispatch for Pallet<T> {
 
 	fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> DispatchResult {
 		match call {
-			Call::Create { caller, claim } => {
+			Call::Create { claim } => {
 				self.create_claim(caller, claim)?;
 			},
-			Call::Revoke { caller, claim } => {
+			Call::Revoke { claim } => {
 				self.revoke_claim(caller, claim)?;
 			},
 		}

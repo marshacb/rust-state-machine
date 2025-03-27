@@ -129,7 +129,6 @@ fn main() {
 		extrinsics: vec![support::Extrinsic {
 			caller: "alice".to_string(),
 			call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::Create {
-				caller: "alice".to_string(),
 				claim: "I did something amazing".to_string(),
 			}),
 		}],
@@ -142,7 +141,6 @@ fn main() {
 		extrinsics: vec![types::Extrinsic {
 			caller: "bob".to_string(),
 			call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::Revoke {
-				caller: "bob".to_string(),
 				claim: "I did something amazing".to_string(),
 			}),
 		}],
