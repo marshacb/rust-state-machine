@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 num = "0.4.3"
+macros = { path = "./macros/" }
 # pallet-balances = { version =  "4.0.0-dev", default-features = false, git "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
