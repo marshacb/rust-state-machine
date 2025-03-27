@@ -1,4 +1,5 @@
 mod balances;
+mod proof_of_existence;
 mod support;
 mod system;
 
@@ -15,16 +16,20 @@ mod types {
 	pub type Extrinsic = support::Extrinsic<AccountId, crate::RuntimeCall>;
 	pub type Header = support::Header<BlockNumber>;
 	pub type Block = support::Block<Header, Extrinsic>;
+
+	pub type Content = String;
 }
 
 pub enum RuntimeCall {
 	Balances(balances::Call<Runtime>),
+	ProofOfExistence(proof_of_existence::Call<Runtime>),
 }
 
 #[derive(Debug)]
 pub struct Runtime {
 	system: system::Pallet<Self>,
 	balances: balances::Pallet<Self>,
+	proof_of_exisence: proof_of_existence::Pallet<Self>,
 }
 
 impl balances::Config for Runtime {
@@ -37,9 +42,17 @@ impl system::Config for Runtime {
 	type Nonce = types::Nonce;
 }
 
+impl proof_of_existence::Config for Runtime {
+	type Content = types::Content;
+}
+
 impl Runtime {
 	fn new() -> Self {
-		Self { system: system::Pallet::<Self>::new(), balances: balances::Pallet::<Self>::new() }
+		Self {
+			system: system::Pallet::<Self>::new(),
+			balances: balances::Pallet::<Self>::new(),
+			proof_of_exisence: proof_of_existence::Pallet::<Self>::new(),
+		}
 	}
 
 	fn execute_block(&mut self, block: types::Block) -> support::DispatchResult {
@@ -76,6 +89,9 @@ impl crate::support::Dispatch for Runtime {
 			RuntimeCall::Balances(call) => {
 				self.balances.dispatch(caller, call)?;
 			},
+			RuntimeCall::ProofOfExistence(call) => {
+				self.proof_of_exisence.dispatch(caller, call)?;
+			},
 		}
 
 		Ok(())
@@ -85,22 +101,6 @@ impl crate::support::Dispatch for Runtime {
 fn main() {
 	let mut runtime = Runtime::new();
 	runtime.balances.set_balance(&"alice".to_string(), 100);
-
-	runtime.system.inc_block_number();
-	// assert_eq!(runtime.system.block_number(), 1);
-
-	// runtime.system.inc_nonce(&"alice".to_string());
-	// let _res = runtime
-	// 	.balances
-	// 	.transfer("alice".to_string(), "bob".to_string(), 30)
-	// 	.map_err(|e| eprintln!("{}", e));
-
-	// runtime.system.inc_nonce(&"alice".to_string());
-
-	// let _res = runtime
-	// 	.balances
-	// 	.transfer("alice".to_string(), "charlie".to_string(), 20)
-	// 	.map_err(|e| eprintln!("{}", e));
 
 	let block_1 = types::Block {
 		header: types::Header { block_number: 1 },
@@ -121,7 +121,34 @@ fn main() {
 			},
 		],
 	};
+
 	runtime.execute_block(block_1).expect("invalid block");
+
+	let block_2 = support::Block {
+		header: types::Header { block_number: 2 },
+		extrinsics: vec![support::Extrinsic {
+			caller: "alice".to_string(),
+			call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::Create {
+				caller: "alice".to_string(),
+				claim: "I did something amazing".to_string(),
+			}),
+		}],
+	};
+
+	runtime.execute_block(block_2).expect("invalid block");
+
+	let block_3 = types::Block {
+		header: types::Header { block_number: 3 },
+		extrinsics: vec![types::Extrinsic {
+			caller: "bob".to_string(),
+			call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::Revoke {
+				caller: "bob".to_string(),
+				claim: "I did something amazing".to_string(),
+			}),
+		}],
+	};
+
+	runtime.execute_block(block_3).expect("invalid block");
 
 	println!("{:#?}", runtime);
 }
